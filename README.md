@@ -1,4 +1,4 @@
-# 🏁 Chess App – AI Analysis
+# 🏁 Chess App – With AI Analysis
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)
 ![Pygame](https://img.shields.io/badge/Pygame-2.6%2B-green?logo=pygame)
