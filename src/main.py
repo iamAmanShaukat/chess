@@ -14,9 +14,18 @@ from src.config.settings import FPS, COORD_MARGIN, BOARD_WIDTH
 def run_game(white_human=True, black_human=True):
     """Run a single game instance."""
     controller = GameController(white_is_human=white_human, black_is_human=black_human)
+
+    # Determine which color the human is playing (for board orientation)
+    if white_human and not black_human:
+        view_color = chess.WHITE
+    elif black_human and not white_human:
+        view_color = chess.BLACK
+    else:
+        view_color = chess.WHITE  # default for human vs human
+
     analysis = ChessAnalysis()
-    display = Display()
-    input_handler = InputHandler()
+    display = Display(view_color=view_color)
+    input_handler = InputHandler(view_color=view_color)
     clock = pygame.time.Clock()
 
     last_fen = controller.get_fen()

@@ -10,7 +10,7 @@ from src.config.settings import (
 )
 
 class Display:
-    def __init__(self):
+    def __init__(self, view_color=chess.WHITE):
         pygame.init()
         try:
             self.screen = pygame.display.set_mode(WINDOW_SIZE)
@@ -19,6 +19,7 @@ class Display:
             pygame.quit()
             exit(1)
         pygame.display.set_caption("Chess App")
+        self.view_color = view_color
         self.piece_images = self.load_piece_images()
         self.font = self.load_font()
 
@@ -41,18 +42,24 @@ class Display:
 
     def draw_board(self, board, selected_square, legal_moves):
         self.screen.fill((30, 30, 30))
-
         board_x = COORD_MARGIN
         board_y = 0
 
-        # Draw squares and pieces
+        is_flipped = (self.view_color == chess.BLACK)
+
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
                 color = LIGHT_SQUARE if (row + col) % 2 == 0 else DARK_SQUARE
                 rect = (board_x + col * SQUARE_SIZE, board_y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
                 pygame.draw.rect(self.screen, color, rect)
 
-                square = chess.square(col, 7 - row)
+                # Determine which square to show based on flip
+                if is_flipped:
+                    # Black at bottom: file a-h still left-right, but rank 8-1 becomes 1-8 visually
+                    square = chess.square(col, row)  # row 0 = rank 1 (bottom for black)
+                else:
+                    square = chess.square(col, 7 - row)  # row 0 = rank 8 (top)
+
                 piece = board.piece_at(square)
                 if piece:
                     symbol = piece.symbol()
@@ -64,47 +71,76 @@ class Display:
                             (board_x + col * SQUARE_SIZE, board_y + row * SQUARE_SIZE)
                         )
 
-        # Highlight selected square and legal moves
+        # Highlighting: convert selected square to screen coords based on flip
         if selected_square is not None:
-            col = chess.square_file(selected_square)
-            row = 7 - chess.square_rank(selected_square)
+            if is_flipped:
+                col = chess.square_file(selected_square)
+                row = chess.square_rank(selected_square)  # 0 = rank 1 (bottom)
+            else:
+                col = chess.square_file(selected_square)
+                row = 7 - chess.square_rank(selected_square)
+
             s = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
             s.fill(HIGHLIGHT)
             self.screen.blit(s, (board_x + col * SQUARE_SIZE, board_y + row * SQUARE_SIZE))
 
             for move in legal_moves:
-                to_col = chess.square_file(move.to_square)
-                to_row = 7 - chess.square_rank(move.to_square)
+                to_sq = move.to_square
+                if is_flipped:
+                    to_col = chess.square_file(to_sq)
+                    to_row = chess.square_rank(to_sq)
+                else:
+                    to_col = chess.square_file(to_sq)
+                    to_row = 7 - chess.square_rank(to_sq)
+
                 center = (
                     board_x + to_col * SQUARE_SIZE + SQUARE_SIZE // 2,
                     board_y + to_row * SQUARE_SIZE + SQUARE_SIZE // 2
                 )
                 pygame.draw.circle(self.screen, (0, 200, 0), center, SQUARE_SIZE // 6)
 
-        # >>> DRAW COORDINATES IN MARGINS <<<
+        # >>> COORDINATES: adjust based on flip <<<
         coord_font = pygame.font.SysFont("Arial", 16)
         coord_bg = (220, 190, 150)
         text_color = (0, 0, 0)
 
-        # Left margin: rank numbers (8 to 1)
-        for row in range(BOARD_SIZE):
-            label = coord_font.render(str(8 - row), True, text_color)
-            bg_rect = pygame.Rect(0, row * SQUARE_SIZE, COORD_MARGIN, SQUARE_SIZE)
-            pygame.draw.rect(self.screen, coord_bg, bg_rect)
-            text_x = COORD_MARGIN - label.get_width() - 4
-            text_y = row * SQUARE_SIZE + (SQUARE_SIZE - label.get_height()) // 2
-            self.screen.blit(label, (text_x, text_y))
+        if is_flipped:
+            # Files: h to a (right to left)
+            for col in range(8):
+                label = coord_font.render(chr(ord('h') - col), True, text_color)
+                bg_rect = pygame.Rect(COORD_MARGIN + col * SQUARE_SIZE, BOARD_HEIGHT, SQUARE_SIZE, COORD_MARGIN)
+                pygame.draw.rect(self.screen, coord_bg, bg_rect)
+                text_x = COORD_MARGIN + col * SQUARE_SIZE + (SQUARE_SIZE - label.get_width()) // 2
+                text_y = BOARD_HEIGHT + (COORD_MARGIN - label.get_height()) // 2
+                self.screen.blit(label, (text_x, text_y))
 
-        # Bottom margin: file letters (a to h)
-        for col in range(BOARD_SIZE):
-            label = coord_font.render(chr(ord('a') + col), True, text_color)
-            bg_rect = pygame.Rect(COORD_MARGIN + col * SQUARE_SIZE, BOARD_HEIGHT, SQUARE_SIZE, COORD_MARGIN)
-            pygame.draw.rect(self.screen, coord_bg, bg_rect)
-            text_x = COORD_MARGIN + col * SQUARE_SIZE + (SQUARE_SIZE - label.get_width()) // 2
-            text_y = BOARD_HEIGHT + (COORD_MARGIN - label.get_height()) // 2
-            self.screen.blit(label, (text_x, text_y))
+            # Ranks: 1 to 8 (bottom to top)
+            for row in range(8):
+                label = coord_font.render(str(row + 1), True, text_color)
+                bg_rect = pygame.Rect(0, row * SQUARE_SIZE, COORD_MARGIN, SQUARE_SIZE)
+                pygame.draw.rect(self.screen, coord_bg, bg_rect)
+                text_x = COORD_MARGIN - label.get_width() - 4
+                text_y = row * SQUARE_SIZE + (SQUARE_SIZE - label.get_height()) // 2
+                self.screen.blit(label, (text_x, text_y))
+        else:
+            # Standard: a-h, 8-1
+            for col in range(8):
+                label = coord_font.render(chr(ord('a') + col), True, text_color)
+                bg_rect = pygame.Rect(COORD_MARGIN + col * SQUARE_SIZE, BOARD_HEIGHT, SQUARE_SIZE, COORD_MARGIN)
+                pygame.draw.rect(self.screen, coord_bg, bg_rect)
+                text_x = COORD_MARGIN + col * SQUARE_SIZE + (SQUARE_SIZE - label.get_width()) // 2
+                text_y = BOARD_HEIGHT + (COORD_MARGIN - label.get_height()) // 2
+                self.screen.blit(label, (text_x, text_y))
 
-        # Border around board
+            for row in range(8):
+                label = coord_font.render(str(8 - row), True, text_color)
+                bg_rect = pygame.Rect(0, row * SQUARE_SIZE, COORD_MARGIN, SQUARE_SIZE)
+                pygame.draw.rect(self.screen, coord_bg, bg_rect)
+                text_x = COORD_MARGIN - label.get_width() - 4
+                text_y = row * SQUARE_SIZE + (SQUARE_SIZE - label.get_height()) // 2
+                self.screen.blit(label, (text_x, text_y))
+
+        # Border
         board_rect = pygame.Rect(board_x, board_y, BOARD_WIDTH, BOARD_HEIGHT)
         pygame.draw.rect(self.screen, (0, 0, 0), board_rect, 2)
 
