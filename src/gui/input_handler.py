@@ -3,28 +3,26 @@ import pygame
 import chess
 from src.config.settings import SQUARE_SIZE, BOARD_SIZE, COORD_MARGIN
 
+
 class InputHandler:
     def __init__(self, view_color=chess.WHITE):
         self.view_color = view_color
+        self.board_x_start = COORD_MARGIN
+        self.board_x_end = COORD_MARGIN + (BOARD_SIZE * SQUARE_SIZE)
+        self.board_y_end = BOARD_SIZE * SQUARE_SIZE
+
+    def set_view_color(self, color):
+        self.view_color = color
 
     def get_square(self, pos):
         x, y = pos
-        board_x_start = COORD_MARGIN
-        board_y_start = 0
-        board_width = BOARD_SIZE * SQUARE_SIZE
-        board_height = BOARD_SIZE * SQUARE_SIZE
 
-        if not (board_x_start <= x < board_x_start + board_width and
-                board_y_start <= y < board_y_start + board_height):
+        if not (self.board_x_start <= x < self.board_x_end and 0 <= y < self.board_y_end):
             return None
 
-        rel_x = x - board_x_start
-        rel_y = y - board_y_start
-        col = rel_x // SQUARE_SIZE
+        col = (x - self.board_x_start) // SQUARE_SIZE
+        row_from_top = y // SQUARE_SIZE
 
-        if self.view_color == chess.WHITE:
-            row = 7 - (rel_y // SQUARE_SIZE)
-        else:
-            row = rel_y // SQUARE_SIZE
+        row = (7 - row_from_top) if self.view_color == chess.WHITE else row_from_top
 
         return chess.square(col, row)

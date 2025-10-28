@@ -3,128 +3,217 @@ import pygame
 from src.config.settings import WINDOW_SIZE, FONT_PATH
 import chess
 
+
 class Menu:
+    # Color constants
+    BG_COLOR = (40, 40, 40)
+    TITLE_COLOR = (240, 240, 240)
+    SUBTITLE_COLOR = (200, 200, 200)
+    BUTTON_COLOR = (60, 180, 75)
+    BUTTON_HOVER_COLOR = (50, 160, 65)
+    BUTTON_BORDER_COLOR = (30, 30, 30)
+    SLIDER_BG_COLOR = (100, 100, 100)
+    TEXT_COLOR = (255, 255, 255)
+
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
         pygame.display.set_caption("Chess App - Main Menu")
+
         try:
             self.font_large = pygame.font.Font(FONT_PATH, 48)
             self.font_btn = pygame.font.Font(FONT_PATH, 32)
-        except:
+            self.font_medium = pygame.font.Font(FONT_PATH, 28)
+        except (FileNotFoundError, OSError):
             self.font_large = pygame.font.SysFont("Arial", 48)
             self.font_btn = pygame.font.SysFont("Arial", 32)
+            self.font_medium = pygame.font.SysFont("Arial", 28)
+
         self.clock = pygame.time.Clock()
 
-    def draw_button(self, text, x, y, width, height, hover=False):
-        color = (60, 180, 75) if not hover else (50, 160, 65)
-        pygame.draw.rect(self.screen, color, (x, y, width, height), border_radius=8)
-        pygame.draw.rect(self.screen, (30, 30, 30), (x, y, width, height), 2, border_radius=8)
-        txt = self.font_btn.render(text, True, (255, 255, 255))
-        # Center text
-        self.screen.blit(txt, (x + width // 2 - txt.get_width() // 2, y + height // 2 - txt.get_height() // 2))
+    def draw_button(self, text, rect, hover=False, font=None):
+        """Draw a button with text centered."""
+        if font is None:
+            font = self.font_btn
+
+        color = self.BUTTON_HOVER_COLOR if hover else self.BUTTON_COLOR
+        pygame.draw.rect(self.screen, color, rect, border_radius=8)
+        pygame.draw.rect(self.screen, self.BUTTON_BORDER_COLOR, rect, 2, border_radius=8)
+
+        txt = font.render(text, True, self.TEXT_COLOR)
+        txt_rect = txt.get_rect(center=rect.center)
+        self.screen.blit(txt, txt_rect)
+
+    def draw_centered_text(self, text, y, font, color):
+        """Draw text centered horizontally at given y position."""
+        surf = font.render(text, True, color)
+        x = WINDOW_SIZE[0] // 2 - surf.get_width() // 2
+        self.screen.blit(surf, (x, y))
 
     def show_difficulty_screen(self, human_color):
-        title = f"Human vs AI ({'White' if human_color == chess.WHITE else 'Black'})"
+        """Show slider to select AI difficulty (1-20)."""
+        color_name = 'White' if human_color == chess.WHITE else 'Black'
+        title = f"Human vs AI ({color_name})"
         subtitle = "Select AI Difficulty (1 = Easy, 20 = Hard)"
 
+        # Slider dimensions
         slider_width = 400
         slider_height = 20
         slider_x = WINDOW_SIZE[0] // 2 - slider_width // 2
         slider_y = 250
+        handle_radius = 15
 
-        difficulty = 10  # default
+        # Slider interaction area (expanded for easier clicking)
+        slider_area = pygame.Rect(
+            slider_x - handle_radius,
+            slider_y - handle_radius,
+            slider_width + handle_radius * 2,
+            slider_height + handle_radius * 2
+        )
+
+        difficulty = 10  # Default difficulty
+        dragging = False
+        needs_redraw = True
+
+        # Confirm button
+        btn_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - 100, slider_y + 100, 200, 50)
 
         running = True
-        dragging = False
         while running:
             mouse_pos = pygame.mouse.get_pos()
-            self.screen.fill((40, 40, 40))
+            btn_hover = btn_rect.collidepoint(mouse_pos)
 
-            # Title
-            title_surf = self.font_large.render(title, True, (240, 240, 240))
-            self.screen.blit(title_surf, (WINDOW_SIZE[0] // 2 - title_surf.get_width() // 2, 100))
-            sub_surf = self.font_btn.render(subtitle, True, (200, 200, 200))
-            self.screen.blit(sub_surf, (WINDOW_SIZE[0] // 2 - sub_surf.get_width() // 2, 180))
+            # Only redraw if something changed
+            if needs_redraw:
+                self.screen.fill(self.BG_COLOR)
 
-            # Slider background
-            pygame.draw.rect(self.screen, (100, 100, 100), (slider_x, slider_y, slider_width, slider_height),
-                             border_radius=10)
-            # Slider handle
-            handle_x = slider_x + int((difficulty - 1) / 19 * slider_width)
-            pygame.draw.circle(self.screen, (60, 180, 75), (handle_x, slider_y + slider_height // 2), 15)
+                # Title and subtitle
+                self.draw_centered_text(title, 100, self.font_large, self.TITLE_COLOR)
+                self.draw_centered_text(subtitle, 180, self.font_btn, self.SUBTITLE_COLOR)
 
-            # Difficulty number
-            diff_text = self.font_large.render(str(difficulty), True, (255, 255, 255))
-            self.screen.blit(diff_text, (WINDOW_SIZE[0] // 2 - diff_text.get_width() // 2, slider_y + 40))
+                # Slider track
+                pygame.draw.rect(
+                    self.screen,
+                    self.SLIDER_BG_COLOR,
+                    (slider_x, slider_y, slider_width, slider_height),
+                    border_radius=10
+                )
 
-            # Confirm button
-            btn_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - 100, slider_y + 100, 200, 50)
-            hover = btn_rect.collidepoint(mouse_pos)
-            pygame.draw.rect(self.screen, (60, 180, 75) if not hover else (50, 160, 65), btn_rect, border_radius=8)
-            btn_text = self.font_btn.render("Start Game", True, (255, 255, 255))
-            self.screen.blit(btn_text, (
-            btn_rect.centerx - btn_text.get_width() // 2, btn_rect.centery - btn_text.get_height() // 2))
+                # Slider handle
+                # Normalize difficulty (1-20) to slider position (0-1)
+                normalized = (difficulty - 1) / 19
+                handle_x = slider_x + int(normalized * slider_width)
+                pygame.draw.circle(
+                    self.screen,
+                    self.BUTTON_COLOR,
+                    (handle_x, slider_y + slider_height // 2),
+                    handle_radius
+                )
 
-            pygame.display.flip()
-            self.clock.tick(30)
+                # Display current difficulty
+                self.draw_centered_text(str(difficulty), slider_y + 40, self.font_large, self.TEXT_COLOR)
+
+                # Confirm button
+                self.draw_button("Start Game", btn_rect, hover=btn_hover)
+
+                pygame.display.flip()
+                needs_redraw = False
+
+            self.clock.tick(60)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
+                    return None  # Signal to exit game
+
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if btn_rect.collidepoint(event.pos):
                         return difficulty
-                    # Check if clicked on slider
-                    if slider_x <= event.pos[0] <= slider_x + slider_width and \
-                            slider_y - 10 <= event.pos[1] <= slider_y + slider_height + 10:
+
+                    if slider_area.collidepoint(event.pos):
                         dragging = True
-                        difficulty = max(1, min(20, 1 + int((event.pos[0] - slider_x) / slider_width * 19)))
+                        # Calculate difficulty from click position
+                        relative_x = max(0, min(slider_width, event.pos[0] - slider_x))
+                        new_difficulty = 1 + int(relative_x / slider_width * 19)
+                        if new_difficulty != difficulty:
+                            difficulty = new_difficulty
+                            needs_redraw = True
+
                 elif event.type == pygame.MOUSEBUTTONUP:
                     dragging = False
-                elif event.type == pygame.MOUSEMOTION and dragging:
-                    difficulty = max(1, min(20, 1 + int((event.pos[0] - slider_x) / slider_width * 19)))
 
-        pygame.quit()
-        return 10
+                elif event.type == pygame.MOUSEMOTION:
+                    if dragging:
+                        relative_x = max(0, min(slider_width, event.pos[0] - slider_x))
+                        new_difficulty = 1 + int(relative_x / slider_width * 19)
+                        if new_difficulty != difficulty:
+                            difficulty = new_difficulty
+                            needs_redraw = True
+                    # Check if hover state changed
+                    elif btn_rect.collidepoint(event.pos) != btn_hover:
+                        needs_redraw = True
+
+        return None
 
     def show_start_screen(self):
-        btn_width, btn_height = 420, 55  # ← wider and taller
-        self.font_btn = pygame.font.SysFont("Arial", 28)
+        """Show main menu with game mode options."""
+        btn_width, btn_height = 420, 55
+        center_x = WINDOW_SIZE[0] // 2
 
-        btn1_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - btn_width // 2, 180, btn_width, btn_height)
-        btn2_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - btn_width // 2, 250, btn_width, btn_height)
-        btn3_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - btn_width // 2, 320, btn_width, btn_height)
+        buttons = [
+            ("Human vs Human", pygame.Rect(center_x - btn_width // 2, 180, btn_width, btn_height)),
+            ("Human vs AI (Play as White)", pygame.Rect(center_x - btn_width // 2, 250, btn_width, btn_height)),
+            ("Human vs AI (Play as Black)", pygame.Rect(center_x - btn_width // 2, 320, btn_width, btn_height))
+        ]
+
+        needs_redraw = True
+        last_hover = None
 
         running = True
         while running:
             mouse_pos = pygame.mouse.get_pos()
-            b1_h = btn1_rect.collidepoint(mouse_pos)
-            b2_h = btn2_rect.collidepoint(mouse_pos)
-            b3_h = btn3_rect.collidepoint(mouse_pos)
 
-            self.screen.fill((40, 40, 40))
-            title = self.font_large.render("Chess App", True, (240, 240, 240))
-            self.screen.blit(title, (WINDOW_SIZE[0] // 2 - title.get_width() // 2, 100))
+            # Determine which button is hovered
+            current_hover = None
+            for i, (_, rect) in enumerate(buttons):
+                if rect.collidepoint(mouse_pos):
+                    current_hover = i
+                    break
 
-            self.draw_button("Human vs Human", *btn1_rect, hover=b1_h)
-            self.draw_button("Human vs AI (Play as White)", *btn2_rect, hover=b2_h)
-            self.draw_button("Human vs AI (Play as Black)", *btn3_rect, hover=b3_h)
+            # Only redraw if hover state changed
+            if needs_redraw or current_hover != last_hover:
+                self.screen.fill(self.BG_COLOR)
+                self.draw_centered_text("Chess App", 100, self.font_large, self.TITLE_COLOR)
 
-            pygame.display.flip()
-            self.clock.tick(30)
+                for i, (text, rect) in enumerate(buttons):
+                    self.draw_button(text, rect, hover=(i == current_hover), font=self.font_medium)
+
+                pygame.display.flip()
+                needs_redraw = False
+                last_hover = current_hover
+
+            self.clock.tick(60)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if btn1_rect.collidepoint(event.pos):
+                    return None  # Signal to exit game
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    # Human vs Human
+                    if buttons[0][1].collidepoint(event.pos):
                         return ("human_vs_human", None)
-                    if btn2_rect.collidepoint(event.pos):
+
+                    # Human vs AI (White)
+                    elif buttons[1][1].collidepoint(event.pos):
                         diff = self.show_difficulty_screen(chess.WHITE)
+                        if diff is None:  # User closed window
+                            return None
                         return ("human_vs_ai", chess.WHITE, diff)
-                    if btn3_rect.collidepoint(event.pos):
+
+                    # Human vs AI (Black)
+                    elif buttons[2][1].collidepoint(event.pos):
                         diff = self.show_difficulty_screen(chess.BLACK)
+                        if diff is None:  # User closed window
+                            return None
                         return ("human_vs_ai", chess.BLACK, diff)
+
+        return None

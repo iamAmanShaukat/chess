@@ -6,7 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="9c62e733-eb28-4f8d-874e-2b405169e946" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/core/stockfish_player.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/stockfish_player.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gui/display.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gui/display.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gui/input_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gui/input_handler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gui/menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gui/menu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
