@@ -1,87 +1,92 @@
 # src/core/stockfish_player.py
 import chess
 from stockfish import Stockfish
-from src.config.settings import STOCKFISH_PATH, PROJECT_ROOT
+from src.config.settings import STOCKFISH_PATH
 import os
 import random
 
 
 class StockfishPlayer:
     def __init__(self, difficulty_level=1):
-        """
-        difficulty_level: int from 1 to 20
-        - Level 1-5: Very weak (random + blunders)
-        - Level 6-10: Moderate (low depth, skill cap)
-        - Level 11-15: Strong (medium depth)
-        - Level 16-20: Full strength
-        """
         self.difficulty = max(1, min(20, difficulty_level))
         self.stockfish = None
+        self.mode = "normal"
         self._init_stockfish()
 
     def _init_stockfish(self):
         if not os.path.exists(STOCKFISH_PATH):
-            print(f"[ERROR] Stockfish not found at: {STOCKFISH_PATH}")
-            return
+            raise RuntimeError(f"Stockfish not found at: {STOCKFISH_PATH}")
 
         try:
-            self.stockfish = Stockfish(path=STOCKFISH_PATH, depth=18, parameters={"Threads": 1})
-
-            # Map difficulty to Stockfish UCI parameters
+            # Smooth depth scaling: 1→5 (very low), 5→10 (low-mid), 10→20 (high)
             if self.difficulty <= 5:
-                # Very weak: random moves + occasional Stockfish move
-                self.mode = "random_with_blunders"
+                depth = 1 + self.difficulty  # 2→6
             elif self.difficulty <= 10:
-                # Weak: limit skill and depth
-                skill = self.difficulty - 1  # 0 to 9
+                depth = 6 + (self.difficulty - 5)  # 7→11
+            else:
+                depth = 11 + (self.difficulty - 10)  # 12→21
+
+            self.stockfish = Stockfish(path=STOCKFISH_PATH, depth=depth, parameters={"Threads": 1})
+
+            # Smoother Elo curve: smaller jumps at lower levels
+            if self.difficulty <= 5:
+                elo = 800 + (self.difficulty - 1) * 50  # 800→1000 (50 per level)
+            elif self.difficulty <= 10:
+                elo = 1000 + (self.difficulty - 5) * 100  # 1000→1500 (100 per level)
+            elif self.difficulty <= 15:
+                elo = 1500 + (self.difficulty - 10) * 150  # 1500→2250 (150 per level)
+            else:
+                elo = 2250 + (self.difficulty - 15) * 50  # 2250→2500 (50 per level)
+
+            # Skill level with diminishing returns
+            skill = min(20, int((self.difficulty - 1) * 1.2))  # 0→20, but slower at top
+
+            # Configure based on difficulty tiers
+            if self.difficulty <= 8:
+                self.mode = "beginner"
                 self.stockfish.update_engine_parameters({
                     "Skill Level": skill,
                     "UCI_LimitStrength": True,
-                    "UCI_Elo": 800 + (skill * 100)  # 800 to 1700 Elo
+                    "UCI_Elo": elo
                 })
-                self.mode = "limited"
-            elif self.difficulty <= 15:
-                # Strong: higher skill, no Elo cap
-                skill = 10 + (self.difficulty - 10)  # 10 to 15
+            elif self.difficulty <= 16:
+                self.mode = "intermediate"
                 self.stockfish.update_engine_parameters({
                     "Skill Level": skill,
-                    "UCI_LimitStrength": False
+                    "UCI_LimitStrength": True,
+                    "UCI_Elo": elo
                 })
-                self.mode = "strong"
             else:
-                # Full strength
+                self.mode = "advanced"
                 self.stockfish.update_engine_parameters({
                     "Skill Level": 20,
                     "UCI_LimitStrength": False
                 })
-                self.mode = "full"
+
         except Exception as e:
-            print(f"[ERROR] Failed to initialize Stockfish: {e}")
-            self.stockfish = None
+            raise RuntimeError(f"Failed to initialize Stockfish: {e}")
 
     def get_move(self, board: chess.Board):
-        """Return a move based on difficulty level."""
-        if self.stockfish is None:
-            # Fallback to random
-            return random.choice(list(board.legal_moves)) if board.legal_moves else None
+        """Return a move according to current difficulty level."""
+        if not board.legal_moves:
+            return None
 
-        if self.mode == "random_with_blunders":
-            # 70% random, 30% Stockfish (but even Stockfish may blunder at low depth)
-            if random.random() < 0.7:
+        # Gradual reduction in random moves for beginners
+        if self.difficulty <= 8:
+            # Level 1: 50%, Level 2: 44%, Level 3: 38%... Level 8: 6%
+            random_chance = max(0, 0.56 - (self.difficulty * 0.06))
+            if random.random() < random_chance:
                 return random.choice(list(board.legal_moves))
-            else:
-                self.stockfish.set_fen_position(board.fen())
-                best = self.stockfish.get_best_move()
-                if best:
-                    return chess.Move.from_uci(best)
-                else:
-                    return random.choice(list(board.legal_moves))
 
-        else:
-            # Use Stockfish with configured strength
-            self.stockfish.set_fen_position(board.fen())
-            best = self.stockfish.get_best_move()
-            if best:
-                return chess.Move.from_uci(best)
-            else:
-                return random.choice(list(board.legal_moves))
+        self.stockfish.set_fen_position(board.fen())
+        best_move_uci = self.stockfish.get_best_move()
+
+        if best_move_uci:
+            try:
+                move = chess.Move.from_uci(best_move_uci)
+                if move in board.legal_moves:
+                    return move
+            except ValueError:
+                pass
+
+        return random.choice(list(board.legal_moves))
