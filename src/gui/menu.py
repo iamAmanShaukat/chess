@@ -21,10 +21,13 @@ class Menu:
         pygame.draw.rect(self.screen, color, (x, y, width, height), border_radius=8)
         pygame.draw.rect(self.screen, (30, 30, 30), (x, y, width, height), 2, border_radius=8)
         txt = self.font_btn.render(text, True, (255, 255, 255))
-        self.screen.blit(txt, (x + width//2 - txt.get_width()//2, y + height//2 - txt.get_height()//2))
+        # Center text
+        self.screen.blit(txt, (x + width // 2 - txt.get_width() // 2, y + height // 2 - txt.get_height() // 2))
 
     def show_start_screen(self):
-        btn_width, btn_height = 380, 50
+        btn_width, btn_height = 420, 55  # ← wider and taller
+        self.font_btn = pygame.font.SysFont("Arial", 28)
+
         btn1_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - btn_width // 2, 180, btn_width, btn_height)
         btn2_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - btn_width // 2, 250, btn_width, btn_height)
         btn3_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - btn_width // 2, 320, btn_width, btn_height)
