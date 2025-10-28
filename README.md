@@ -15,7 +15,7 @@ A feature-rich, modular chess application built with Python, Pygame, and Stockfi
   - Human vs AI (play as White or Black)
 - **Gradual AI Difficulty** (Levels 1–20):
   - Level 1: Random moves (beginner-friendly)
-  - Level 10: ~1700 Elo (club player)
+  - Level 10: ~2500 Elo (club player)
   - Level 20: Full Stockfish strength
 - **Interactive Analysis**:
   - Toggle Stockfish evaluation on/off
@@ -35,7 +35,7 @@ A feature-rich, modular chess application built with Python, Pygame, and Stockfi
   - Easy to add new engines or features
 
 ---
-
+![img.png](img.png)
 ## 🗂️ System Architecture
 
 ```
