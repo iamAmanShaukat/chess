@@ -125,16 +125,18 @@ python -m src.main
 
 ---
 
-## 🧠 AI Difficulty Levels
+## 🧠 AI Difficulty Scaling
 
-| Level | Behavior |
-|-------|--------|
-| 1–5 | Mostly random moves; occasional blunders |
-| 6–10 | Limited strength (800–1700 Elo); makes tactical errors |
-| 11–15 | Strong play; rarely blunders |
-| 16–20 | Full engine strength; near-perfect play |
+The AI’s strength increases **smoothly from Level 1 to 20**, adjusting **depth**, **Elo**, **skill**, and **randomness** to create natural progression from beginner to advanced play.
 
-> The progression is **smooth** — each level is slightly stronger than the last.
+| Level Range | Mode | Behavior | Technical Scaling |
+|--------------|------|-----------|-------------------|
+| **1–8** | 🟢 *Beginner* | Plays many random moves early on (up to 50%), gradually reducing errors with each level. | • **Depth:** 2 → 9<br>• **Elo:** 800 → 1400<br>• **Skill:** 1 → 8<br>• **Randomness:** 50% → 6% |
+| **9–16** | 🟡 *Intermediate* | Focuses on positional play and basic tactics with limited strength enabled. | • **Depth:** 10 → 17<br>• **Elo:** 1400 → 2250<br>• **Skill:** 9 → 16 |
+| **17–20** | 🔴 *Advanced* | Uses full Stockfish power — minimal randomness, high depth, and unrestricted skill. | • **Depth:** 18 → 21<br>• **Elo:** 2250 → 2500+<br>• **Skill:** 17 → 20 (unlimited) |
+
+> ⚙️ The AI gradually reduces randomness while increasing depth, Elo, and skill.  
+> Early levels simulate human-like mistakes, while higher levels approach professional engine performance.
 
 ---
 
