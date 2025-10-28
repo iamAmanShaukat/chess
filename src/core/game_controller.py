@@ -7,10 +7,10 @@ from src.core.board import ChessBoard
 from src.core.player import Player
 
 class GameController:
-    def __init__(self, white_is_human=True, black_is_human=True):
+    def __init__(self, white_is_human=True, black_is_human=True, white_difficulty=1, black_difficulty=1):
         self.board = ChessBoard()
-        self.white_player = Player(chess.WHITE, is_human=white_is_human)
-        self.black_player = Player(chess.BLACK, is_human=black_is_human)
+        self.white_player = Player(chess.WHITE, is_human=white_is_human, difficulty_level=white_difficulty)
+        self.black_player = Player(chess.BLACK, is_human=black_is_human, difficulty_level=black_difficulty)
         self.game_over = False
         self.ai_move_pending = False
         self.move_history = []
@@ -96,9 +96,10 @@ class GameController:
         if not current_player.is_human:
             if not self.ai_move_pending:
                 self.ai_move_pending = True
-                time.sleep(0.3)
-                move = current_player.get_random_move(self.board.board)
+                time.sleep(0.2)  # Slight delay
+                move = current_player.get_move(self.board.board)
                 if move:
+                    # Handle promotion (auto-queen if needed)
                     if (self.board.board.piece_at(move.from_square) and
                         self.board.board.piece_at(move.from_square).piece_type == chess.PAWN and
                         chess.square_rank(move.to_square) in (0, 7)):

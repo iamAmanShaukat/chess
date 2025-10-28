@@ -24,6 +24,71 @@ class Menu:
         # Center text
         self.screen.blit(txt, (x + width // 2 - txt.get_width() // 2, y + height // 2 - txt.get_height() // 2))
 
+    def show_difficulty_screen(self, human_color):
+        title = f"Human vs AI ({'White' if human_color == chess.WHITE else 'Black'})"
+        subtitle = "Select AI Difficulty (1 = Easy, 20 = Hard)"
+
+        slider_width = 400
+        slider_height = 20
+        slider_x = WINDOW_SIZE[0] // 2 - slider_width // 2
+        slider_y = 250
+
+        difficulty = 10  # default
+
+        running = True
+        dragging = False
+        while running:
+            mouse_pos = pygame.mouse.get_pos()
+            self.screen.fill((40, 40, 40))
+
+            # Title
+            title_surf = self.font_large.render(title, True, (240, 240, 240))
+            self.screen.blit(title_surf, (WINDOW_SIZE[0] // 2 - title_surf.get_width() // 2, 100))
+            sub_surf = self.font_btn.render(subtitle, True, (200, 200, 200))
+            self.screen.blit(sub_surf, (WINDOW_SIZE[0] // 2 - sub_surf.get_width() // 2, 180))
+
+            # Slider background
+            pygame.draw.rect(self.screen, (100, 100, 100), (slider_x, slider_y, slider_width, slider_height),
+                             border_radius=10)
+            # Slider handle
+            handle_x = slider_x + int((difficulty - 1) / 19 * slider_width)
+            pygame.draw.circle(self.screen, (60, 180, 75), (handle_x, slider_y + slider_height // 2), 15)
+
+            # Difficulty number
+            diff_text = self.font_large.render(str(difficulty), True, (255, 255, 255))
+            self.screen.blit(diff_text, (WINDOW_SIZE[0] // 2 - diff_text.get_width() // 2, slider_y + 40))
+
+            # Confirm button
+            btn_rect = pygame.Rect(WINDOW_SIZE[0] // 2 - 100, slider_y + 100, 200, 50)
+            hover = btn_rect.collidepoint(mouse_pos)
+            pygame.draw.rect(self.screen, (60, 180, 75) if not hover else (50, 160, 65), btn_rect, border_radius=8)
+            btn_text = self.font_btn.render("Start Game", True, (255, 255, 255))
+            self.screen.blit(btn_text, (
+            btn_rect.centerx - btn_text.get_width() // 2, btn_rect.centery - btn_text.get_height() // 2))
+
+            pygame.display.flip()
+            self.clock.tick(30)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if btn_rect.collidepoint(event.pos):
+                        return difficulty
+                    # Check if clicked on slider
+                    if slider_x <= event.pos[0] <= slider_x + slider_width and \
+                            slider_y - 10 <= event.pos[1] <= slider_y + slider_height + 10:
+                        dragging = True
+                        difficulty = max(1, min(20, 1 + int((event.pos[0] - slider_x) / slider_width * 19)))
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    dragging = False
+                elif event.type == pygame.MOUSEMOTION and dragging:
+                    difficulty = max(1, min(20, 1 + int((event.pos[0] - slider_x) / slider_width * 19)))
+
+        pygame.quit()
+        return 10
+
     def show_start_screen(self):
         btn_width, btn_height = 420, 55  # ← wider and taller
         self.font_btn = pygame.font.SysFont("Arial", 28)
@@ -56,13 +121,10 @@ class Menu:
                     exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if btn1_rect.collidepoint(event.pos):
-                        pygame.quit()
                         return ("human_vs_human", None)
                     if btn2_rect.collidepoint(event.pos):
-                        pygame.quit()
-                        return ("human_vs_ai", chess.WHITE)
+                        diff = self.show_difficulty_screen(chess.WHITE)
+                        return ("human_vs_ai", chess.WHITE, diff)
                     if btn3_rect.collidepoint(event.pos):
-                        pygame.quit()
-                        return ("human_vs_ai", chess.BLACK)
-        pygame.quit()
-        return ("human_vs_human", None)
+                        diff = self.show_difficulty_screen(chess.BLACK)
+                        return ("human_vs_ai", chess.BLACK, diff)

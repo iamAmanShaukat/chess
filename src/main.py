@@ -11,8 +11,13 @@ from src.core.analysis import ChessAnalysis
 from src.config.settings import FPS, COORD_MARGIN, BOARD_WIDTH
 
 
-def run_game(white_human=True, black_human=True):
-    controller = GameController(white_is_human=white_human, black_is_human=black_human)
+def run_game(white_human=True, black_human=True, white_difficulty=1, black_difficulty=1):
+    controller = GameController(
+        white_is_human=white_human,
+        black_is_human=black_human,
+        white_difficulty=white_difficulty,
+        black_difficulty=black_difficulty
+    )
 
     if white_human and not black_human:
         view_color = chess.WHITE
@@ -138,13 +143,31 @@ def run_game(white_human=True, black_human=True):
 def main():
     while True:
         menu = Menu()
-        mode, human_color = menu.show_start_screen()
+        menu_result = menu.show_start_screen()
+
+        if menu_result[0] == "human_vs_human":
+            mode = "human_vs_human"
+            human_color = None
+            difficulty = 1
+        else:
+            mode, human_color, difficulty = menu_result
         if mode == "human_vs_human":
             white_human, black_human = True, True
+            white_diff, black_diff = 1, 1
         else:
             white_human = (human_color == chess.WHITE)
             black_human = (human_color == chess.BLACK)
-        result = run_game(white_human=white_human, black_human=black_human)
+            if white_human:
+                white_diff, black_diff = 1, difficulty
+            else:
+                white_diff, black_diff = difficulty, 1
+
+        result = run_game(
+                white_human=white_human,
+                black_human=black_human,
+                white_difficulty=white_diff,
+                black_difficulty=black_diff
+            )
         if result == "quit":
             break
         elif result == "back_to_menu":
