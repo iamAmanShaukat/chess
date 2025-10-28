@@ -35,7 +35,7 @@ A feature-rich, modular chess application built with Python, Pygame, and Stockfi
   - Easy to add new engines or features
 
 ---
-![img.png](img.png)
+![App Screenshot](assets/images/screenshot.png)
 ## 🗂️ System Architecture
 
 ```
