@@ -10,14 +10,13 @@ BOARD_WIDTH = BOARD_SIZE * SQUARE_SIZE
 BOARD_HEIGHT = BOARD_SIZE * SQUARE_SIZE
 # Window: board + right panel (300px) + margins
 WINDOW_SIZE = (
-    BOARD_WIDTH + 300 + COORD_MARGIN,   # extra COORD_MARGIN on right isn't needed, but safe
-    BOARD_HEIGHT + COORD_MARGIN         # extra space at bottom for file labels
+    BOARD_WIDTH + 300 + COORD_MARGIN,
+    BOARD_HEIGHT + COORD_MARGIN
 )
 FPS = 60
 
-# Board origin (shifted right and down by margin)
 BOARD_OFFSET_X = COORD_MARGIN
-BOARD_OFFSET_Y = 0  # ranks on left, so only X offset neede
+BOARD_OFFSET_Y = 0
 
 # Colors
 WHITE = (255, 255, 255)
@@ -39,4 +38,4 @@ FONT_PATH = os.path.join(ASSET_PATH, "fonts", "arial.ttf")
 
 # Stockfish settings
 STOCKFISH_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "stockfish", "stockfish")
-ANALYSIS_DEPTH = 15
+ANALYSIS_DEPTH = 17

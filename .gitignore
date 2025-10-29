@@ -1,0 +1,69 @@
+# Python
+*.py[cod]
+*$py.class
+*.so
+__pycache__/
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.xml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Stockfish (if you don't want to commit the binary)
+stockfish
+stockfish.exe
+stockfish_*
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Environment variables
+.env
+.env.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Game saves/data (if you add them later)
+saves/
+data/
+
+# Compiled translations
+*.mo
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+

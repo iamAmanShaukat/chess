@@ -17,7 +17,6 @@ class ChessBoard:
         return self.legal_moves
 
     def make_move(self, move):
-        """Make a move on the board."""
         if move in self.board.legal_moves:
             self.board.push(move)
             self.selected_square = None
@@ -26,11 +25,9 @@ class ChessBoard:
         return False
 
     def get_fen(self):
-        """Get the current board position in FEN."""
         return self.board.fen()
 
     def is_game_over(self):
-        """Check if the game is over."""
         return self.board.is_game_over()
 
     def get_result(self):

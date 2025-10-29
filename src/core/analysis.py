@@ -20,12 +20,10 @@ class ChessAnalysis:
             self.enabled = False
 
     def toggle_analysis(self):
-        """Toggle analysis on or off (only if available)."""
         if self.stockfish is not None:
             self.enabled = not self.enabled
 
     def analyze_position(self, fen):
-        """Analyze the current position and return evaluation."""
         if not self.enabled or self.stockfish is None:
             return None
         try:
